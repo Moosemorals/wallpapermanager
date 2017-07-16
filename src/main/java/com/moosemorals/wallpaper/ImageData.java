@@ -20,15 +20,15 @@ public class ImageData  {
         this.height = image.getHeight();
     }
 
-    Path getPath() {
+    public Path getPath() {
         return path;
     }
 
-    int getWidth() {
+    public int getWidth() {
         return width;
     }
 
-    int getHeight() {
+    public int getHeight() {
         return height;
     }
 

@@ -27,11 +27,8 @@ public class Main {
 
         ImageList list = new ImageList();
 
-        Executor executor = Executors.newFixedThreadPool(4);
 
-        Files.walkFileTree(target.toPath(), new ImageVisitor(executor, list));
-
-        list.processList(entry -> {
+        list.reset(target, entry -> {
 
             Path originalPath = entry.getPath();
 
@@ -40,17 +37,19 @@ public class Main {
             String extension = originalName.substring(originalName.lastIndexOf(".") + 1, originalName.length());
             String name = originalName.substring(0, originalName.lastIndexOf("."));
 
-            String replacementName = String.format("%s [%dx%d].%s", name, entry.getWidth(), entry.getHeight(), extension);
+            String replacementName = String.format("%s - [%dx%d].%s", name, entry.getWidth(), entry.getHeight(), extension);
 
-            Path replacementPath = originalPath.resolve(replacementName);
+            Path replacementPath = originalPath.getParent().resolve(replacementName);
 
             System.out.printf("Moving %s to %s\n", originalPath.toString(), replacementPath.toString());
-          //  if (!originalPath.toFile().renameTo(replacementPath.toFile())) {
-          //      System.out.printf("  WARNING: Move failed");
-          //  }
+            //  if (!originalPath.toFile().renameTo(replacementPath.toFile())) {
+            //      System.out.printf("  WARNING: Move failed");
+            //  }
 
             //System.out.printf("[%d x %d] %s\n", entry.getWidth(), entry.getHeight(), entry.getPath().toString());
         });
+
+
 
     }
 

@@ -13,7 +13,7 @@ import java.util.concurrent.Executor;
  * Have a look at image files
  * Created by osric on 15/07/17.
  */
-public class ImageVisitor extends SimpleFileVisitor<Path> {
+class ImageVisitor extends SimpleFileVisitor<Path> {
 
     private final Executor executor;
     private final ImageList list;
@@ -30,13 +30,13 @@ public class ImageVisitor extends SimpleFileVisitor<Path> {
 
         executor.execute(() -> {
             try {
-                BufferedImage img = ImageIO.read(path.toFile());
+                BufferedImage image = ImageIO.read(path.toFile());
 
-                if (img == null) {
+                if (image == null) {
                     throw new IOException("Can't read image from [" + path.toString() + "]");
                 }
 
-                list.addImage(new ImageData(path, img));
+                list.addImage(path, image);
 
             } catch (IOException ex) {
                 list.registerError();

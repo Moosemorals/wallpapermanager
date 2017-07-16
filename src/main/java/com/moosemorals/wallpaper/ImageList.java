@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 public final class ImageList implements TableModel {
 
     private static final String[] COLUMN_NAMES = {"Path", "Width", "Height"};
+    private static final Class[] COLUMN_CLASSES = {String.class, Integer.class, Integer.class};
 
     private final File target;
     private final List<ImageData> list;
@@ -56,7 +57,7 @@ public final class ImageList implements TableModel {
 
     @Override
     public Class<?> getColumnClass(int col) {
-        return String.class;
+        return COLUMN_CLASSES[col];
     }
 
     @Override
@@ -73,9 +74,9 @@ public final class ImageList implements TableModel {
         switch (col) {
             case 0:
                 return entry.getPath().toString();
-            case 2:
-                return String.format("%d", entry.getWidth());
             case 1:
+                return String.format("%d", entry.getWidth());
+            case 2:
                 return String.format("%d", entry.getHeight());
         }
         return null;
@@ -116,12 +117,8 @@ public final class ImageList implements TableModel {
         Executor executor = Executors.newFixedThreadPool(4);
 
         Files.walkFileTree(target.toPath(), new ImageVisitor(executor, this));
-    }
 
-    public int size() {
-        synchronized (list) {
-            return list.size();
-        }
+        onComplete();
     }
 
     public ImageData get(int index) {
@@ -130,8 +127,8 @@ public final class ImageList implements TableModel {
         }
     }
 
-    /** Tell us there's data coming
-     *
+    /**
+     * Tell us there's data coming
      */
     void register() {
         synchronized (list) {
@@ -144,28 +141,34 @@ public final class ImageList implements TableModel {
      */
     void registerError() {
         synchronized (list) {
-            outstanding -=1;
+            outstanding -= 1;
         }
     }
 
     /**
      * Add an Image to the list
-     * @param img
      */
     void addImage(Path path, BufferedImage image) {
-        int row;
         synchronized (list) {
             list.add(new ImageData(path, image));
-            row = list.size();
             outstanding -= 1;
             list.notifyAll();
         }
+    }
 
-        notifyTableModelListeners(new TableModelEvent(this, row, row, TableModelEvent.INSERT));
+    void onComplete() throws InterruptedException {
+        synchronized (list) {
+            while (outstanding > 0) {
+                list.wait();
+            }
+        }
+
+        notifyTableModelListeners(new TableModelEvent(this, 0, getRowCount(), TableModelEvent.INSERT));
     }
 
     /**
      * Do something with the list once it's completed.
+     *
      * @param andThen Consumer&lt;ImageData&gt; called for every item in the list
      * @throws InterruptedException if we get bored waiting.
      */

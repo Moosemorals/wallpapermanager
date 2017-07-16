@@ -42,6 +42,7 @@ public final class Ui {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         final JTable table = new JTable(imageList);
+        table.setAutoCreateRowSorter(true);
 
         frame.add(new JScrollPane(table));
 

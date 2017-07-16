@@ -28,10 +28,15 @@ public class Main {
         File target = new File(BASE_DIR);
 
         final ImageList list = new ImageList(target);
-        list.reset();
 
         SwingUtilities.invokeLater(() -> {
             Ui ui = new Ui(list);
+
+            try {
+                list.reset();
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
         });
     }
 }

@@ -1,7 +1,10 @@
 package com.moosemorals.wallpaper;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
@@ -32,23 +35,41 @@ public final class Ui {
         //System.out.printf("[%d x %d] %s\n", entry.getWidth(), entry.getHeight(), entry.getPath().toString());
     };
 
-    private final ImageList imageList;
-
-    public Ui(ImageList imageList) {
-        this.imageList = imageList;
+    Ui(ImageList imageList) {
 
         final JFrame frame = new JFrame("Wallpapers");
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        final JTable table = new JTable(imageList);
-        table.setAutoCreateRowSorter(true);
+        final ImageDisplay imageDisplay = new ImageDisplay();
 
-        frame.add(new JScrollPane(table));
+        final JTable table = new JTable();
+        table.setAutoCreateRowSorter(true);
+        table.setModel(imageList);
+
+        for (int i = 0; i < imageList.getColumnCount(); i += 1) {
+            TableColumn column = table.getColumnModel().getColumn(i);
+
+            column.setPreferredWidth(imageList.getColumnWidth(i));
+            column.setMaxWidth(imageList.getColumnWidth(i));
+        }
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                int row = table.rowAtPoint(mouseEvent.getPoint());
+                if (row >= 0) {
+                    imageDisplay.setImageData(imageList.get(row));
+                }
+            }
+        });
+
+
+
+        frame.add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(table), imageDisplay));
 
         frame.pack();
         frame.setVisible(true);
     }
-
 
 }

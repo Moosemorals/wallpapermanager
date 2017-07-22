@@ -1,7 +1,9 @@
 package com.moosemorals.wallpaper;
 
-import java.awt.*;
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.file.Path;
 
 /**
@@ -20,16 +22,20 @@ public class ImageData  {
         this.height = image.getHeight();
     }
 
-    public Path getPath() {
+    Path getPath() {
         return path;
     }
 
-    public int getWidth() {
+    int getWidth() {
         return width;
     }
 
-    public int getHeight() {
+    int getHeight() {
         return height;
+    }
+
+    BufferedImage getImage() throws IOException {
+        return ImageIO.read(path.toFile());
     }
 
     @Override

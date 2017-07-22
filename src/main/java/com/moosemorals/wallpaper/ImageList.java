@@ -23,8 +23,36 @@ import java.util.function.Consumer;
  */
 public final class ImageList implements TableModel {
 
-    private static final String[] COLUMN_NAMES = {"Path", "Width", "Height"};
-    private static final Class[] COLUMN_CLASSES = {String.class, Integer.class, Integer.class};
+    private enum Column {
+        Path("Path", String.class, -1),
+        Width("Width", Integer.class, 64),
+        Height("Height", Integer.class, 64);
+
+        private final String displayName;
+        private final Class clazz;
+        private final int width;
+
+        Column(String displayName, Class clazz, int width) {
+            this.displayName = displayName;
+            this.clazz = clazz;
+            this.width = width;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public Class getClazz() {
+            return clazz;
+        }
+
+        public int getWidth() {
+            return width;
+        }
+    }
+
+    private final Column[] columns = Column.values();
+
 
     private final File target;
     private final List<ImageData> list;
@@ -47,18 +75,20 @@ public final class ImageList implements TableModel {
 
     @Override
     public int getColumnCount() {
-        return COLUMN_NAMES.length;
+        return columns.length;
     }
 
     @Override
     public String getColumnName(int col) {
-        return COLUMN_NAMES[col];
+        return columns[col].getDisplayName();
     }
 
     @Override
     public Class<?> getColumnClass(int col) {
-        return COLUMN_CLASSES[col];
+        return columns[col].getClazz();
     }
+
+    int getColumnWidth(int col) { return  columns[col].getWidth(); }
 
     @Override
     public boolean isCellEditable(int row, int col) {
@@ -102,13 +132,13 @@ public final class ImageList implements TableModel {
     }
 
     private void notifyTableModelListeners(TableModelEvent e) {
-        SwingUtilities.invokeLater(() -> {
+     //   SwingUtilities.invokeLater(() -> {
             synchronized (listeners) {
                 for (TableModelListener l : listeners) {
                     l.tableChanged(e);
                 }
             }
-        });
+     //   });
     }
 
     void reset() throws IOException, InterruptedException {
@@ -121,7 +151,7 @@ public final class ImageList implements TableModel {
         onComplete();
     }
 
-    public ImageData get(int index) {
+    ImageData get(int index) {
         synchronized (list) {
             return list.get(index);
         }
@@ -133,6 +163,7 @@ public final class ImageList implements TableModel {
     void register() {
         synchronized (list) {
             outstanding += 1;
+
         }
     }
 
@@ -149,21 +180,23 @@ public final class ImageList implements TableModel {
      * Add an Image to the list
      */
     void addImage(Path path, BufferedImage image) {
+        int size;
         synchronized (list) {
             list.add(new ImageData(path, image));
             outstanding -= 1;
+            System.out.printf("Loaded %d images, %d oustanding\n", list.size(), outstanding);
             list.notifyAll();
+            size = list.size() - 1;
         }
+        notifyTableModelListeners(new TableModelEvent(this, size, size, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
     }
 
-    void onComplete() throws InterruptedException {
+    private void onComplete() throws InterruptedException {
         synchronized (list) {
             while (outstanding > 0) {
                 list.wait();
             }
         }
-
-        notifyTableModelListeners(new TableModelEvent(this, 0, getRowCount(), TableModelEvent.INSERT));
     }
 
     /**
